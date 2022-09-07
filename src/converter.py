@@ -19,11 +19,11 @@ def extractXlsx(path, cols: any):
 
 #set parameters for looping
 dfList = list(columns.keys())
-index = -1
+index = 0
 
 #looping the process of extraction and generate the json files, the standard path is json/file.json
 for key in columns.keys():
-    index += 1
     file = 'json/{}.json'.format(dfList[index])
     df = extractXlsx(pathing[key], columns[key])
     df.to_json(file, orient='records')
+    index += 1
