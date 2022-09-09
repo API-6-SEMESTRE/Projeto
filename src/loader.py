@@ -27,33 +27,34 @@ def mongo_find_all(user="", passw="", db=db, col=collection):
         client = connect()
     else:
         client = connect(user, passw)
+
     db = client[db]
     collection = db[col]
     search = collection.find()
     data = []
+
     for i in search:
         data.append(i)
     client.close()
     return data
 
 
-# get json data from 'json/files.json' and convert to variables
-with open('json/header.json') as fileHeader:
-    header = json.load(fileHeader)
+def main():
+   # get json data from 'json/files.json' and convert to variables
+    with open('json/header.json') as file_header:
+        header = json.load(file_header)
 
-with open('json/monthlyPay.json') as fileMonthlyPay:
-    monthlyPay = json.load(fileMonthlyPay)
+    with open('json/monthly_pay.json') as file_monthly:
+        monthly_pay = json.load(file_monthly)
 
-with open('json/transfer.json') as fileTransfer:
-    transfer = json.load(fileTransfer)
+    with open('json/transfer.json') as file_transfer:
+        transfer = json.load(file_transfer)
 
-# insert data in MongoDB collections
-'''
-mongo_insert_many(list=header, col="header")
-mongo_insert_many(list=monthlyPay, col="monthlyPay")
-mongo_insert_many(list=transfer, col="transfer")
-'''
+    # insert data in MongoDB collections
+    mongo_insert_many(list=header, col="header")
+    mongo_insert_many(list=monthly_pay, col="monthly_pay")
+    mongo_insert_many(list=transfer, col="transfer")
 
-print('header: \n', mongo_find_all(col='header'))
-print('\n\n\nmonthlyPay: \n', mongo_find_all(col='monthlyPay'))
-print('\n\n\ntransfer: \n', mongo_find_all(col='transfer'))
+
+if __name__ == '__main__':
+    main()
