@@ -41,13 +41,13 @@ def mongo_find_all(user="", passw="", db=db, col=collection):
 
 def main():
    # get json data from 'json/files.json' and convert to variables
-    with open('json/header.json') as file_header:
+    with open('json/header.json', encoding='utf-8') as file_header:
         header = json.load(file_header)
 
-    with open('json/monthly_pay.json') as file_monthly:
+    with open('json/monthly_pay.json', encoding='utf-8') as file_monthly:
         monthly_pay = json.load(file_monthly)
 
-    with open('json/transfer.json') as file_transfer:
+    with open('json/transfer.json', encoding='utf-8') as file_transfer:
         transfer = json.load(file_transfer)
 
     # insert data in MongoDB collections
