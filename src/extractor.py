@@ -5,6 +5,7 @@ import anonymizer as anon
 import extract as log
 import loader
 import argparse
+from datetime import datetime
 
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
 pathing = {
@@ -55,11 +56,15 @@ def generate_json(df, level):
 
 
 def main():
+    start_time = datetime.now()
     df = ''
     level = args.level
     sys.stdout.write('Executing {} procedure...\n'.format(level))
     generate_json(df, level)
     loader.run(level)
+    end_time = datetime.now()
+
+    sys.stdout.write('--- duration: {} ---\n'.format(end_time-start_time))
 
 
 if __name__ == '__main__':
