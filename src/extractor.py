@@ -4,6 +4,8 @@ import re
 import anonymizer as anon
 import extract as log
 import loader
+import argparse
+
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
 pathing = {
     'header': 'data_sources/amil_header_bronze.xlsx',
@@ -18,6 +20,10 @@ columns = {
     'transfer': ['cod_contrato', 'codigo_convenio', 'codigo_plano', 'convenio', 'competencia', 'dependente', 'dt_cancelamento',
                  'dt_situacao', 'dt_suspensao', 'inicio_vigencia', 'marca_otica', 'nXmX_bXnXfXWXXrXX', 'plano', 'saude_net_orig', 'situacao']
 }
+
+parser=argparse.ArgumentParser(description='ETL process for excel data')
+parser.add_argument('-l', '--level', type=str, metavar='', required=True,choices=['bronze','silver','ouro'], help='Level of ETL (bronze, silver, gold)')
+args=parser.parse_args()
 
 
 # function to extract xlsx files
@@ -50,8 +56,8 @@ def generate_json(df, level):
 
 def main():
     df = ''
-    level = sys.argv[1];
-    print(level)
+    level = args.level
+    sys.stdout.write('Executing {} procedure...\n'.format(level))
     generate_json(df, level)
     loader.run(level)
 
