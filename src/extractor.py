@@ -1,6 +1,9 @@
+import sys
 import pandas as pd
 import re
-
+import anonymizer as anon
+import extract as log
+import loader
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
 pathing = {
     'header': 'data_sources/amil_header_bronze.xlsx',
@@ -18,17 +21,28 @@ columns = {
 
 
 # function to extract xlsx files
-def extract_xlsx(path, cols: any):
-    return pd.read_excel(path, usecols=cols)
+def extract_xlsx(path, cols: any, key, level):
+    df = pd.read_excel(path, usecols=cols)
+    
+    if level == 'silver':
+        if key == 'monthly_pay':
+            anon.anonymize_name(df, 1)
+        elif key == 'transfer':
+            anon.anonymize_name(df, 2)
+
+    log.log_everything(df, level)
+    
+    return df
 
 
 # function to generate json files
-def generate_json(df):
+def generate_json(df, level):
     df_list = list(columns.keys())
     index = 0
     for key in columns.keys():
-        file = 'json/{}.json'.format(df_list[index])
-        df = extract_xlsx(pathing[key], columns[key])
+        file = 'json/silver/{}.json'.format(df_list[index])
+        df = extract_xlsx(pathing[key], columns[key], key, level)
+        
         df.to_json(file, orient='records',
                    date_format='iso', force_ascii=False,)
         index += 1
@@ -36,8 +50,10 @@ def generate_json(df):
 
 def main():
     df = ''
-
-    generate_json(df)
+    level = sys.argv[1];
+    print(level)
+    generate_json(df, level)
+    loader.run(level)
 
 
 if __name__ == '__main__':
