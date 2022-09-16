@@ -2,21 +2,17 @@ from pymongo.server_api import ServerApi
 from pymongo import MongoClient
 import json
 import logging
+from anonymizer import PROCESS_NAME
+import log
 from datetime import date
 db = "test"
 collection = "rock"
 
 
-log_name = str(date.today())
-log_name = 'logs/'+log_name+'_backup'+'.log'
-root_logger= logging.getLogger()
-root_logger.setLevel(logging.DEBUG) # or whatever
-handler = logging.FileHandler(log_name, 'a', 'utf-8') # or whatever
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')) # or whatever
-root_logger.addHandler(handler)
-
-
-
+PROCESS_NAME = 'insertion'
+df = {}
+level = ''
+log_id = -1
 def connect(user="cate", passw="api6SEM."):
     client = MongoClient(f"mongodb+srv://{user}:{passw}@cate.rem7mj8.mongodb.net/?retryWrites=true&w=majority",
                          server_api=ServerApi('1'))
@@ -24,6 +20,7 @@ def connect(user="cate", passw="api6SEM."):
 
 
 def mongo_insert_many(list, user="", passw="", db=db, col=collection):
+    logger = log.setup_logger(flag, PROCESS_NAME, log_id)
     if (len(user) and len(passw)) <= 3:
         client = connect()
     else:
@@ -31,6 +28,7 @@ def mongo_insert_many(list, user="", passw="", db=db, col=collection):
     db = client[db]
     collection = db[col]
     collection.insert_many(list)
+    log.log_everything(logger, df)
 
 
 def mongo_find_all(user="", passw="", db=db, col=collection):
@@ -49,9 +47,13 @@ def mongo_find_all(user="", passw="", db=db, col=collection):
     client.close()
     return data
 
-def run(level):
+def run(df,level,log_id):
     global flag
     flag = level
+    DF = df
+    level = level
+    df = df
+    log_id=log_id
     main()
 
 def main():

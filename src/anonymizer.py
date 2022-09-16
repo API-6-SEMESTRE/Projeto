@@ -1,13 +1,9 @@
 import logging
 from datetime import date
+import pandas as pd
+import log
 
-log_name = str(date.today())
-log_name = 'logs/anonymizer'+log_name+'.log'
-root_logger= logging.getLogger()
-root_logger.setLevel(logging.DEBUG) # or whatever
-handler = logging.FileHandler(log_name, 'a', 'utf-8') # or whatever
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')) # or whatever
-root_logger.addHandler(handler)
+pd.options.mode.chained_assignment = None  # default='warn'
 
 
 COLUMNS = {
@@ -17,18 +13,22 @@ COLUMNS = {
                  'dt_situacao', 'dt_suspensao', 'inicio_vigencia', 'marca_otica', 'nXmX_bXnXfXWXXrXX', 'plano', 'saude_net_orig', 'situacao']
 }
 
+PROCESS_NAME='anonymizing'
 
-def anonymize_name(df, flag):
+def anonymize_name(df, flag, level, log_id):
+    logger = log.setup_logger(level, PROCESS_NAME, log_id)
     if flag == 1:
         for i in range(len(df['nXmX_bXnXfiWiXriX'])):
             aux = df['nXmX_bXnXfiWiXriX'][i]
             anon = "beneficiario_marca_otica_"+str(df['marca_otica'][i])
             df['nXmX_bXnXfiWiXriX'][i] = anon
-            logging.info('['+ str(df['_idFile'][i]) + ']: ' + aux + ' anonimizado para: ' + str(anon))
+            logger.info(str(df['_idFile'][i]) + ': ' + aux + ' anonimizado para: ' + str(anon))
     else:
         for i in range(len(df['nXmX_bXnXfXWXXrXX'])):
             aux = df['nXmX_bXnXfXWXXrXX'][i]
             anon = "beneficiario_marca_otica_"+str(df['marca_otica'][i])
             df['nXmX_bXnXfXWXXrXX'][i] = anon
-            logging.info('['+ str(df['cod_contrato'][i]) + ']: ' + aux + ' anonimizado para: ' + str(anon))
+            logger.info('['+ str(df['cod_contrato'][i]) + ': ' + aux + ' anonimizado para: ' + str(anon))
+    
+
 
