@@ -13,7 +13,7 @@ PROCESS_NAME = 'insertion'
 df = {}
 level = ''
 log_id = -1
-def connect(user="cate", passw="api6SEM."):
+def connect(user="", passw=""):
     client = MongoClient(f"mongodb+srv://{user}:{passw}@cate.rem7mj8.mongodb.net/?retryWrites=true&w=majority",
                          server_api=ServerApi('1'))
     return client
