@@ -22,13 +22,26 @@ def anonymize_name(df, flag, level, log_id):
             aux = df['nXmX_bXnXfiWiXriX'][i]
             anon = "beneficiario_marca_otica_"+str(df['marca_otica'][i])
             df['nXmX_bXnXfiWiXriX'][i] = anon
-            logger.info(str(df['_idFile'][i]) + ': ' + aux + ' anonimizado para: ' + str(anon))
+            
+            if 'nan' in aux:
+                logger.warning(str(df['_idFile'][i]) + ': ' + aux + ' anonimizado para: ' + str(anon))
+            else:
+                logger.info(str(df['_idFile'][i]) + ': ' + aux + ' anonimizado para: ' + str(anon))
+            
+            
     else:
         for i in range(len(df['nXmX_bXnXfXWXXrXX'])):
             aux = df['nXmX_bXnXfXWXXrXX'][i]
+            check_nan = df['cod_contrato'][i]
             anon = "beneficiario_marca_otica_"+str(df['marca_otica'][i])
+            
             df['nXmX_bXnXfXWXXrXX'][i] = anon
-            logger.info('['+ str(df['cod_contrato'][i]) + ': ' + aux + ' anonimizado para: ' + str(anon))
+            
+            if 'nan' in check_nan:
+                logger.warning('['+ str(df['cod_contrato'][i]) + ': ' + aux + ' anonimizado para: ' + str(anon))
+            else:
+                logger.info('['+ str(df['cod_contrato'][i]) + ': ' + aux + ' anonimizado para: ' + str(anon))
+            
     
 
 

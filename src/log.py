@@ -18,7 +18,11 @@ def log_everything(logger, df):
         for j in range(len(df.max())):
             column_log = str(df.iloc[i, j])
             linha_log = linha_log + column_log + ':'
-        logger.info(linha_log)
+        
+        if 'nan' in linha_log:
+            logger.warning(linha_log)
+        else:
+            logger.info(linha_log)
 
 
 def setup_logger(level, process_name, log_id):
