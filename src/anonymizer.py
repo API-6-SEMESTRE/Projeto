@@ -21,6 +21,11 @@ def anonymize_name(df, flag, level, log_id):
         for i in range(len(df['nXmX_bXnXfiWiXriX'])):
             aux = df['nXmX_bXnXfiWiXriX'][i]
             anon = "beneficiario_marca_otica_"+str(df['marca_otica'][i])
+            
+            if not df['marca_otica'][í]:
+                logger.error(str(df['_idFile'][i]) + ': ' + aux + ' anonimização falhou! Linha não possui marca_otica')
+                continue
+                
             df['nXmX_bXnXfiWiXriX'][i] = anon
             
             if 'nan' in aux:
