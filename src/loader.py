@@ -47,9 +47,12 @@ def mongo_find_all(user="", passw="", db=db, col=collection):
 def run(df,level,log_id):
     global flag
     flag = level
-    global df_ = df
-    global level_ = level
-    global log_id_ =log_id
+    global df_ 
+    df_ = df
+    global level_ 
+    level_ = level
+    global log_id_
+    log_id_ = log_id
     main()
 
 def main():
