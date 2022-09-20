@@ -10,9 +10,9 @@ collection = "rock"
 
 
 PROCESS_NAME = 'insertion'
-df = {}
-level = ''
-log_id = -1
+DF = {}
+LEVEL = ''
+LOG_ID = -1
 def connect(user="", passw=""):
     client = MongoClient(f"mongodb+srv://{user}:{passw}@cate.rem7mj8.mongodb.net/?retryWrites=true&w=majority",
                          server_api=ServerApi('1'))
@@ -20,7 +20,7 @@ def connect(user="", passw=""):
 
 
 def mongo_insert_many(list, user="", passw="", db=db, col=collection):
-    logger = log.setup_logger(flag, PROCESS_NAME, log_id)
+    logger = log.setup_logger(LEVEL, PROCESS_NAME, LOG_ID)
     if (len(user) and len(passw)) <= 3:
         client = connect()
     else:
@@ -28,7 +28,7 @@ def mongo_insert_many(list, user="", passw="", db=db, col=collection):
     db = client[db]
     collection = db[col]
     collection.insert_many(list)
-    log.log_everything(logger, df)
+    log.log_everything(logger, DF)
 
 
 def mongo_find_all(user="", passw="", db=db, col=collection):
@@ -51,9 +51,8 @@ def run(df,level,log_id):
     global flag
     flag = level
     DF = df
-    level = level
-    df = df
-    log_id=log_id
+    LEVEL = level
+    LOG_ID=log_id
     main()
 
 def main():
