@@ -58,6 +58,7 @@ def generate_json(df, level, log_id):
         df.to_json(file, orient='records',
                    date_format='iso', force_ascii=False,)
         index += 1
+    return df
 
 
 def main():
@@ -67,10 +68,11 @@ def main():
     log_id = uuid.uuid1()
     sys.stdout.write('Executing {} procedure...\n'.format(level))
     sys.stdout.write('Generating json\n')
-    generate_json(df,level,log_id)
+    df = generate_json(df,level,log_id)
     loader.run(df,level,log_id)
     end_time = datetime.now()
-
+    
+    sys.stdout.write('--- log id: {} ---\n'.format(log_id))
     sys.stdout.write('--- duration: {} ---\n'.format(end_time-start_time))
 
 
