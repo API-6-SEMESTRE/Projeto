@@ -1,4 +1,5 @@
-pymongo
 dnspython
-pandas
 openpyxl
+pandas
+pymongo
+python-decouple
