@@ -1,13 +1,18 @@
 from pymongo.server_api import ServerApi
 from pymongo import MongoClient
 import pandas
+from decouple import config
+
+user = config("MONGO_USER")
+password = config("MONGO_PASSW")
+con = config("MONGO_CON")
 
 db = "test"
-collection = "rock"
+collection = "roll"
 
 
-def connect(user="cate", passw="api6SEM."):
-    client = MongoClient(f"mongodb+srv://{user}:{passw}@cate.rem7mj8.mongodb.net/?retryWrites=true&w=majority",
+def connect(user=user, passw=password):
+    client = MongoClient(f"mongodb+srv://{user}:{passw}@{con}",
                          server_api=ServerApi('1'))
     return client
 
@@ -45,6 +50,7 @@ def mongo_find_one(user="", passw="", db=db, col=collection):
     collection = db[col]
     collection.find_one()
 
+
 # retorna uma lista com todos os docs
 def mongo_find_all(user="", passw="", db=db, col=collection):
     if (len(user) and len(passw)) <= 3:
@@ -60,11 +66,9 @@ def mongo_find_all(user="", passw="", db=db, col=collection):
     client.close()
     return data
 
-# TODO pesquisa por data
 
 if __name__ == '__main__':
-    #df = pandas.read_excel("Dom Rock/amil_repasse_bronze.xlsx")
-    #list = [{"a": 1}, {"b": 2}, {"c": "3"}]
-    #mongo_insert_many(list=df, col="repasse")
-    #print(mongo_find_all())
+    list = [{"a": 1}, {"b": 2}, {"c": "3"}]
+    mongo_insert_many(list=list, col="reTest")
+    print(mongo_find_all())
     pass
