@@ -13,18 +13,18 @@ import time
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
 pathing = {
     'header': 'data_sources/amil_header_bronze.xlsx',
-    'monthly_pay': 'data_sources/amil_mensalidade_bronze.xlsx',
-    'transfer': 'data_sources/amil_repasse_bronze.xlsx'
+    'mensalidade': 'data_sources/amil_mensalidade_bronze.xlsx',
+    'repasse': 'data_sources/amil_repasse_bronze.xlsx'
 }
 
 # dictionary that gets the columns from each file by namekey, 'namefile': ['columns']
 columns = {
     'header': ['_id', '_idFile', '_lineNumber', 'contrato',  'dt_competencia', 'numero_fatura'],
     
-    'monthly_pay': ['_id', '_idFile', '_idheader_bronze', 'dt_inclusao', 'marca_otica', 'nXmX_bXnXfiWiXriX', 'outros', 'outros_orig', 
+    'mensalidade': ['_id', '_idFile', '_idheader_bronze', 'dt_inclusao', 'marca_otica', 'nXmX_bXnXfiWiXriX', 'outros', 'outros_orig', 
     'plano', 'rubrica', 'tp_beneficiario', 'valor_orig'],
     
-    'transfer': ['boleto_1', 'boleto_2', 'boleto_3', 'cod_contrato', 'codigo_convenio', 'codigo_plano', 'codigo_produto', 'codigo_segurado', 
+    'repasse': ['boleto_1', 'boleto_2', 'boleto_3', 'cod_contrato', 'codigo_convenio', 'codigo_plano', 'codigo_produto', 'codigo_segurado', 
     'competencia', 'convenio', 'dependente', 'dt_cancelamento', 'dt_geracao', 'dt_nascimento', 'dt_situacao', 'dt_suspensao', 'inicio_vigencia', 
     'marca_otica', 'marca_otica_odonto', 'nXmX_bXnXfXWXXrXX', 'odonto', 'odonto_net', 'odonto_net_orig', 'odonto_net_str', 'odonto_orig', 'odonto_str', 
     'operadora', 'parcela_1', 'plano', 'saude', 'saude_net_orig', 'saude_orig', 'situacao']
@@ -82,6 +82,70 @@ def connect(user="cate", passw="api6SEM."):
     return client
 
 
+def check_key_fields(df, path, logger):
+    logger = logging.getLogger(args.level+'.not_found')
+
+    if 'header' in path:
+        n = len(df['contrato'])
+        i = 0
+        flag = False
+        while i < n:
+            if df['contrato'][i] == 'nan':
+                s = 'ROW REMOVED '
+                s += ':'.join(df.iloc[i].values)
+                logger.error(s)
+                df.drop(df.index[i], inplace=True)
+                n-=1
+                flag = True
+            if not flag:
+                i+=1
+            else:
+                flag = False
+                df = df.reset_index(drop=True)
+
+    elif 'mensalidade' in path:
+        
+        n = len(df['marca_otica'])
+        i = 0
+        flag = False
+        while i < n:
+            print(df['marca_otica'])
+            s = df['marca_otica'][i] == 'nan'
+            s = df['valor_orig'][i] == 'nan'
+            if df['marca_otica'][i] == 'nan' or df['valor_orig'][i] == 'nan':
+                s = 'ROW REMOVED '
+                s += ':'.join(df.iloc[i].values)
+                logger.error(s)
+                df.drop(df.index[i], inplace=True)
+                n-=1
+                flag = True
+            if not flag:
+                i+=1
+            else:
+                flag = False
+                df = df.reset_index(drop=True)
+                print(df['marca_otica'])
+
+    elif 'repasse' in path:
+        n = len(df['marca_otica'])
+        i = 0
+        flag = False
+        while i < n:
+            if df['marca_otica'][i] == 'nan' or df['competencia'][i] == 'nan' or df['saude_net_orig'][i] == 'nan':
+                s = 'ROW REMOVED '
+                s += ':'.join(df.iloc[i].values)
+                logger.error(s)
+                df.drop(df.index[i], inplace=True)
+                n-=1
+                flag = True
+            if not flag:
+                i+=1
+            else:
+                flag = False
+                df = df.reset_index(drop=True)
+    return df
+
+
 # function to extract xlsx files
 def extract_xlsx(path, cols: any, log_id):
     
@@ -94,6 +158,8 @@ def extract_xlsx(path, cols: any, log_id):
     df['time_stamp'] = ''
     df = df.assign(time_stamp=datetime.now()).astype('str')
     log_everything(logger, df)
+
+    df = check_key_fields(df, path, logger)
 
     return df
 
@@ -121,7 +187,6 @@ def generate_json(df, log_id):
     for key in columns.keys():
         file = 'json/'+args.level+'/{}.json'.format(df_list[index])
         df = extract_xlsx(pathing[key], columns[key], log_id)
-        
         df.to_json(file, orient='records',
                    date_format='iso', force_ascii=False,)
         index += 1
@@ -189,7 +254,7 @@ def main():
 ╚══════╝   ╚═╝╚══════╝╚══════╝       
                                                                                                              
         """)
-    time.sleep(3)
+    #time.sleep(3)
     start_time = datetime.now()
     start_time_file = str(start_time).replace(':', '-')
     start_time_file = str(start_time_file).replace(' ', '_')
