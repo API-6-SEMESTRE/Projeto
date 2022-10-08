@@ -15,22 +15,23 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
+
 pathing = {
-    'header': 'data_sources/amil_header_bronze.xlsx',
-    'mensalidade': 'data_sources/amil_mensalidade_bronze.xlsx',
-    'repasse': 'data_sources/amil_repasse_bronze.xlsx'
+    'header': 'data_sources/affix_amil_header_bronze.xlsx',
+    'mensalidade': 'data_sources/affix_amil_mensalidade_bronze.xlsx',
+    'repasse': 'data_sources/affix_repasse_bronze.xlsx'
 }
 
 # dictionary that gets the columns from each file by namekey, 'namefile': ['columns']
 columns = {
-    'header': ['_id', '_idFile', '_lineNumber', 'contrato',  'dt_competencia', 'numero_fatura'],
+    'header': ['_idFile', '_lineNumber', 'contrato',  'dt_competencia', 'numero_fatura'],
 
-    'mensalidade': ['_id', '_idFile', '_idheader_bronze', 'dt_inclusao', 'marca_otica', 'nXmX_bXnXfiWiXriX', 'outros', 'outros_orig',
+    'mensalidade': ['_id', '_idFile', '_idheader_bronze', 'dt_inclusao', 'marca_otica', 'nome', 'outros', 'outros_orig',
                     'plano', 'rubrica', 'tp_beneficiario', 'valor_orig'],
 
     'repasse': ['boleto_1', 'boleto_2', 'boleto_3', 'cod_contrato', 'codigo_convenio', 'codigo_plano', 'codigo_produto', 'codigo_segurado',
                 'competencia', 'convenio', 'dependente', 'dt_cancelamento', 'dt_geracao', 'dt_nascimento', 'dt_situacao', 'dt_suspensao', 'inicio_vigencia',
-                'marca_otica', 'marca_otica_odonto', 'nXmX_bXnXfXWXXrXX', 'odonto', 'odonto_net', 'odonto_net_orig', 'odonto_net_str', 'odonto_orig', 'odonto_str',
+                'marca_otica', 'marca_otica_odonto', 'nome', 'odonto', 'odonto_net', 'odonto_net_orig', 'odonto_net_str', 'odonto_orig', 'odonto_str',
                 'operadora', 'parcela_1', 'plano', 'saude', 'saude_net_orig', 'saude_orig', 'situacao']
 }
 
@@ -82,7 +83,7 @@ def setup_logger(log_id):
         logging.getLogger('').addHandler(console)
 
 
-def connect(user="cate", passw="api6SEM."):
+def connect(user="", passw=""):
     client = MongoClient(f"mongodb+srv://{user}:{passw}@cate.rem7mj8.mongodb.net/?retryWrites=true&w=majority",
                          server_api=ServerApi('1'))
     return client
@@ -257,10 +258,10 @@ def run_loader(df):
     with open('json/'+args.level+'/header.json', encoding='utf-8') as file_header:
         header = json.load(file_header)
 
-    with open('json/'+args.level+'/monthly_pay.json', encoding='utf-8') as file_monthly:
+    with open('json/'+args.level+'/mensalidade.json', encoding='utf-8') as file_monthly:
         monthly_pay = json.load(file_monthly)
 
-    with open('json/'+args.level+'/transfer.json', encoding='utf-8') as file_transfer:
+    with open('json/'+args.level+'/repasse.json', encoding='utf-8') as file_transfer:
         transfer = json.load(file_transfer)
 
     # insert data in MongoDB collections
