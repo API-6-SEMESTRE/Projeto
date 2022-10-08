@@ -1,5 +1,0 @@
-dnspython
-openpyxl
-pandas
-pymongo
-python-decouple

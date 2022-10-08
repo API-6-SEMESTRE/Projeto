@@ -35,6 +35,9 @@ collection = "rock"
 
 parser=argparse.ArgumentParser(description='ETL process for excel data')
 parser.add_argument('-l', '--level', type=str, metavar='', required=True,choices=['bronze','silver'], help='Level of ETL (bronze, silver)')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('-q', '--quiet', action='store_true', help='print quiet')
+group.add_argument('-v', '--verbose', action='store_true', help='print verbose')
 args=parser.parse_args()
 
 
@@ -69,7 +72,8 @@ def setup_logger(log_id):
         # tell the handler to use this format
     console.setFormatter(formatter)
         # add the handler to the root logger
-    logging.getLogger('').addHandler(console)
+    if args.verbose:
+        logging.getLogger('').addHandler(console)
 
 
 def connect(user="cate", passw="api6SEM."):
@@ -90,8 +94,6 @@ def extract_xlsx(path, cols: any, log_id):
     df['time_stamp'] = ''
     df = df.assign(time_stamp=datetime.now()).astype('str')
     log_everything(logger, df)
-    
-    logger.disabled = True
 
     return df
 
@@ -140,7 +142,6 @@ def mongo_insert_many(list, user="", passw="", db=db, col=collection, data_frame
     collection.insert_many(list)
 
     log_everything(logger, data_frame)
-    logger.disabled = True
 
 
 def run_loader(df):
@@ -202,6 +203,7 @@ def main():
     sys.stdout.write('Executing {} procedure...\n'.format(args.level))
     sys.stdout.write('Generating json\n')
     df = generate_json(df,log_id)
+    sys.stdout.write('Inserting to database...\n')
     run_loader(df)
     end_time = datetime.now()
 
