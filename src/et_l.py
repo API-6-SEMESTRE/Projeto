@@ -17,21 +17,21 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
 
 pathing = {
-    'header': 'data_sources/affix_amil_header_bronze.xlsx',
-    'mensalidade': 'data_sources/affix_amil_mensalidade_bronze.xlsx',
-    'repasse': 'data_sources/affix_repasse_bronze.xlsx'
+    'header': 'data_sources/old/amil_header_bronze.xlsx',
+    'mensalidade': 'data_sources/old/amil_mensalidade_bronze.xlsx',
+    'repasse': 'data_sources/old/amil_repasse_bronze.xlsx'
 }
 
 # dictionary that gets the columns from each file by namekey, 'namefile': ['columns']
 columns = {
     'header': ['_idFile', '_lineNumber', 'contrato',  'dt_competencia', 'numero_fatura'],
 
-    'mensalidade': ['_id', '_idFile', '_idheader_bronze', 'dt_inclusao', 'marca_otica', 'nome', 'outros', 'outros_orig',
+    'mensalidade': ['_id', '_idFile', '_idheader_bronze', 'dt_inclusao', 'marca_otica', 'nXmX_bXnXfiWiXriX', 'outros', 'outros_orig',
                     'plano', 'rubrica', 'tp_beneficiario', 'valor_orig'],
 
     'repasse': ['boleto_1', 'boleto_2', 'boleto_3', 'cod_contrato', 'codigo_convenio', 'codigo_plano', 'codigo_produto', 'codigo_segurado',
                 'competencia', 'convenio', 'dependente', 'dt_cancelamento', 'dt_geracao', 'dt_nascimento', 'dt_situacao', 'dt_suspensao', 'inicio_vigencia',
-                'marca_otica', 'marca_otica_odonto', 'nome', 'odonto', 'odonto_net', 'odonto_net_orig', 'odonto_net_str', 'odonto_orig', 'odonto_str',
+                'marca_otica', 'marca_otica_odonto', 'nXmX_bXnXfXWXXrXX', 'odonto', 'odonto_net', 'odonto_net_orig', 'odonto_net_str', 'odonto_orig', 'odonto_str',
                 'operadora', 'parcela_1', 'plano', 'saude', 'saude_net_orig', 'saude_orig', 'situacao']
 }
 
@@ -285,20 +285,7 @@ def throw_away(df):
 
         with open('json/'+args.level+'/repasse_error.json', encoding='utf-8') as file_transfer:
             repasse_error = json.load(file_transfer)
-        '''
-        df_header_error = pd.read_json(header_error)
-        df_mensalidade_error = pd.read_json(mensalidade_error)
-        df_repasse_error = pd.read_json(repasse_error)
-        '''
-        # insert data in MongoDB collections
-        '''
-        print('header')
-        print(header_error)
-        print('mensalidade')
-        print(mensalidade_error)
-        print('repasse')
-        print(repasse_error)
-        '''
+
         if header_error != []:
             mongo_insert_error(list=header_error, db="bronze_anomalies",
                                col="header_"+(args.level))
@@ -339,24 +326,28 @@ def main():
 ╚══════╝   ╚═╝╚══════╝╚══════╝       
                                                                                                              
         """)
-    # time.sleep(3)
+    time.sleep(3)
     start_time = datetime.now()
     start_time_file = str(start_time).replace(':', '-')
     start_time_file = str(start_time_file).replace(' ', '_')
 
-    df = ''
+    if args.level == 'bronze':
+        df = ''
 
-    log_id = uuid.uuid1()
-    log_id = str(start_time_file) + '_' + str(log_id)
-    setup_logger(log_id)
+        log_id = uuid.uuid1()
+        log_id = str(start_time_file) + '_' + str(log_id)
+        setup_logger(log_id)
 
-    sys.stdout.write('Executing {} procedure...\n'.format(args.level))
-    sys.stdout.write('Generating json\n')
-    df = generate_json(df, log_id)
+        sys.stdout.write('Executing {} procedure...\n'.format(args.level))
+        sys.stdout.write('Generating json\n')
+        df = generate_json(df, log_id)
 
-    sys.stdout.write('Inserting to database...\n')
-    throw_away(df)
-    run_loader(df)
+        sys.stdout.write('Inserting to database...\n')
+        throw_away(df)
+        run_loader(df)
+
+    elif args.level == 'bronze':
+        print('silver')
 
     end_time = datetime.now()
 
