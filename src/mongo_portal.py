@@ -26,7 +26,6 @@ def mongo_insert_one(dict, user="", passw="", db=db, col=collection):
     db = client[db]
     collection = db[col]
     collection.insert_one(dict)
-    client.close()
 
 
 # insere uma lista de dicts

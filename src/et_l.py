@@ -13,6 +13,7 @@ import logging
 import time
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
+from silver_analysis import analysis
 
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
 
@@ -347,7 +348,7 @@ def main():
         run_loader(df)
 
     elif args.level == 'silver':
-        print('silver')
+        analysis()
 
     end_time = datetime.now()
 
