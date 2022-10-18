@@ -346,7 +346,7 @@ def main():
         throw_away(df)
         run_loader(df)
 
-    elif args.level == 'bronze':
+    elif args.level == 'silver':
         print('silver')
 
     end_time = datetime.now()
