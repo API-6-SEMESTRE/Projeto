@@ -198,6 +198,7 @@ def analysis():
 
     print("Conferindo se os valores são os mesmos...")
     # Identifica todos os casos conciliados e conciliados_com_div
+    df_h_m_r_silver = df_h_m_r_silver.reset_index() 
     bd = "cate"
     matches = []
     results = []
