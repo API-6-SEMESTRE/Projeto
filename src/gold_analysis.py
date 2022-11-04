@@ -1,79 +1,85 @@
 import sys
-import pandas as pd
-from pymongo import MongoClient
-from pymongo.server_api import ServerApi
 from mongo_portal import mongo_find_all
-import argparse
 from datetime import datetime
-import uuid
-import json
-import logging
-import time
 import warnings
-import oracledb
+import mysql.connector
 
 warnings.filterwarnings("ignore", category=FutureWarning)
-from silver_analysis import analysis
 
-p_username = "ADMIN"
-p_password = "rnVusRjcU2naBa"
-p_walletpass = "rnVusRjcU2naBa"
+api_db = mysql.connector.connect(
+    host='localhost',
+    user='root',
+    password='apicate6',
+    database='api'
+)
 
-con = oracledb.connect(user=p_username,
-                       password=p_password,
-                       dsn="apicatedw_high",
-                       config_dir="./key",
-                       wallet_location="./key",
-                       wallet_password=p_walletpass)
 header = mongo_find_all(db="cate", col="header_bronze")
-cursor = con.cursor()
+cursor = api_db.cursor()
 
 
 def to_date(x):
-    if x == 'NaT':
+    if x == 'NaT' or x is None:
         return None
     return datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
 
 
-def to_id(x):
-    return int(x.getvalue()[0])
+def get_id():
+    return cursor.lastrowid
+
+
+def to_int(x):
+    if x is None or x == 'nan':
+        return None
+    return int(x)
+
+
+def to_float(x):
+    if x is None or x == 'nan':
+        return None
+    return float(x)
+
 
 def build_fatura(line):
     fatura = {}
+    colunas = ['dt_competencia', 'numero_fatura', 'rubrica', 'parcela_1', 'dt_geracao']
+    for coluna in colunas:
+        if coluna not in line.keys():
+            line[coluna] = None
 
-    fatura['competencia'] = to_date(line['competencia'])
-    fatura['numero_fatura'] = int(line['numero_fatura'])
+    fatura['competencia'] = to_date(line['dt_competencia'])
+    fatura['numero_fatura'] = to_int(line['numero_fatura'])
     fatura['rubrica'] = line['rubrica']
-    fatura['parcela'] = float(line['parcela_1'])
+    fatura['parcela'] = to_float(line['parcela_1'])
     fatura['dt_geracao'] = to_date(line['dt_geracao'])
 
     return fatura
 
 
 def save_faturas(fatura):
-    id_fat = cursor.var(oracledb.NUMBER)
-
-    sql = "insert into fatura(competencia, numero_fatura, rubrica , parcela, dt_geracao ) " \
-          "values(:competencia,:numero_fatura,:rubrica,:parcela,:dt_geracao) " \
-          "returning id_fat into :id_fat"
+    print(fatura)
+    sql = "insert into api.fatura(competencia, numero_fatura, rubrica , parcela, dt_geracao ) " \
+          "values(%s,%s,%s,%s,%s) "
 
     cursor.execute(sql,
                    [fatura['competencia'],
                     fatura['numero_fatura'],
                     fatura['rubrica'],
                     fatura['parcela'],
-                    fatura['dt_geracao'],
-                    id_fat])
+                    fatura['dt_geracao']])
 
-    print(id_fat.getvalue())
-    con.commit()
-    return to_id(id_fat)
+    print(get_id())
+    api_db.commit()
+    return get_id()
 
 
 def build_convenio(line):
     convenio = {}
+    colunas = ['codigo_convenio', 'convenio', 'operadora']
+    for coluna in colunas:
+        if coluna not in line.keys():
+            line[coluna] = None
 
-    convenio['codigo_convenio'] = int(line['codigo_convenio'])
+    convenio['codigo_convenio'] = to_int(line['codigo_convenio'])
     convenio['convenio'] = line['convenio']
     convenio['operadora'] = line['operadora']
 
@@ -81,52 +87,47 @@ def build_convenio(line):
 
 
 def save_convenio(convenio):
-    id_conv = cursor.var(oracledb.NUMBER)
-
-    sql = "insert into convenio(codigo_convenio, convenio, operadora) " \
-          "values(:codigo_convenio,:convenio,:operadora) " \
-          "returning id_conv into :id_conv"
+    sql = "insert into api.convenio(codigo_convenio, convenio, operadora) " \
+          "values(%s,%s,%s) "
 
     cursor.execute(sql,
                    [convenio['codigo_convenio'],
                     convenio['convenio'],
-                    convenio['operadora'],
-                    id_conv])
+                    convenio['operadora']])
 
-    print(id_conv.getvalue())
-    con.commit()
-    return to_id(id_conv)
+    print(get_id())
+    api_db.commit()
+    return get_id()
 
 
 def build_beneficiario(line):
     beneficiario = {}
+    colunas = ['tp_beneficiario', 'nXmX_bXnXfiWiXriX', 'marca_otica', 'dt_nascimento']
+    for coluna in colunas:
+        if coluna not in line.keys():
+            line[coluna] = None
 
     beneficiario['tipo'] = line['tp_beneficiario']
     beneficiario['nome'] = line['nXmX_bXnXfiWiXriX']
-    beneficiario['marca_otica'] = int(line['marca_otica'])
+    beneficiario['marca_otica'] = to_int(line['marca_otica'])
     beneficiario['dt_nascimento'] = to_date(line['dt_nascimento'])
 
     return beneficiario
 
 
 def save_beneficiario(beneficiario):
-    id_seg = cursor.var(oracledb.NUMBER)
-
-    print(beneficiario)
-    sql = "insert into beneficiario(tipo, nome, marca_otica, dt_nascimento) " \
-          "values(:tipo,:nome,:marca_otica,:dt_nascimento) " \
-          "returning id_seg into :id_seg"
+    sql = "insert into api.beneficiario(tipo, nome, marca_otica, dt_nascimento) " \
+          "values(%s,%s,%s,%s) "
 
     cursor.execute(sql,
                    [beneficiario['tipo'],
                     beneficiario['nome'],
                     beneficiario['marca_otica'],
-                    beneficiario['dt_nascimento'],
-                    id_seg])
+                    beneficiario['dt_nascimento']])
 
-    print(id_seg.getvalue())
-    con.commit()
-    return to_id(id_seg)
+    print(get_id())
+    api_db.commit()
+    return get_id()
 
 
 def build_data():
@@ -138,28 +139,32 @@ def build_data():
 
 
 def save_data(data):
-    id_dat = cursor.var(oracledb.NUMBER)
-
-    sql = "insert into tempo(data) " \
-          "values(:data) " \
-          "returning id_dat into :id_dat"
+    sql = "insert into api.tempo(data) " \
+          "values(%s) "
 
     cursor.execute(sql,
-                   [data['data'],
-                    id_dat])
+                   [data['data']])
 
-    print(id_dat.getvalue())
-    con.commit()
-    return to_id(id_dat)
+    print(get_id())
+    api_db.commit()
+    return get_id()
 
 
 def build_contrato(line):
     contrato = {}
+    colunas = ['plano_x', 'contrato', 'situacao', 'dependente', 'dt_cancelamento', 'dt_situacao', 'inicio_vigencia',
+               'dt_suspensao']
+    for coluna in colunas:
+        if coluna not in line.keys():
+            if coluna == 'dependente':
+                line[coluna] = 0
+            else:
+                line[coluna] = None
 
     contrato['plano'] = line['plano_x']
-    contrato['num_contrato'] = int(line['contrato'])
+    contrato['num_contrato'] = to_int(line['contrato'])
     contrato['situacao'] = line['situacao']
-    contrato['dependente'] = int(line['dependente'])
+    contrato['dependente'] = to_int(line['dependente'])
     contrato['dt_cancelamento'] = to_date(line['dt_cancelamento'])
     contrato['dt_situacao'] = to_date(line['dt_situacao'])
     contrato['inicio_vigencia'] = to_date(line['inicio_vigencia'])
@@ -169,13 +174,9 @@ def build_contrato(line):
 
 
 def save_contrato(contrato):
-    id_cont = cursor.var(oracledb.NUMBER)
-
-    sql = "insert into contrato(plano, num_contrato, situacao, " \
+    sql = "insert into api.contrato(plano, num_contrato, situacao, " \
           "dependente, dt_cancelamento, dt_situacao, inicio_vigencia, dt_suspensao ) " \
-          "values(:plano,:num_contrato,:situacao," \
-          ":dependente,:dt_cancelamento,:dt_situacao,:inicio_vigencia,:dt_suspensao) " \
-          "returning id_cont into :id_cont"
+          "values(%s,%s,%s,%s,%s,%s,%s,%s) "
 
     cursor.execute(sql,
                    [contrato['plano'],
@@ -185,16 +186,22 @@ def save_contrato(contrato):
                     contrato['dt_cancelamento'],
                     contrato['dt_situacao'],
                     contrato['inicio_vigencia'],
-                    contrato['dt_suspensao'],
-                    id_cont])
+                    contrato['dt_suspensao']])
 
-    print(id_cont.getvalue())
-    con.commit()
-    return to_id(id_cont)
+    print(get_id())
+    api_db.commit()
+    return get_id()
 
 
 def build_fato(line, ids):
     fato = {}
+    colunas = ['valor_orig', 'saude_net_orig', 'resultado']
+    for coluna in colunas:
+        if coluna not in line.keys():
+            if coluna == 'resultado':
+                line[coluna] = None
+            else:
+                line[coluna] = 0
 
     fato['id_cont'] = ids['id_cont']
     fato['id_fat'] = ids['id_fat']
@@ -209,10 +216,9 @@ def build_fato(line, ids):
 
 
 def save_fato(fato):
-    sql = "insert into fato(id_cont, id_fat, id_seg , " \
+    sql = "insert into api.fato(id_cont, id_fat, id_seg , " \
           "id_dat, id_conv, mensalidade, repasse, caso ) " \
-          "values(:id_cont,:id_fat,:id_seg," \
-          ":id_dat,:id_conv,:mensalidade,:repasse,:caso)"
+          "values(%s,%s,%s,%s,%s,%s,%s,%s)"
 
     cursor.execute(sql,
                    [fato['id_cont'],
@@ -225,15 +231,15 @@ def save_fato(fato):
                     fato['caso']]
                    )
 
-    con.commit()
+    api_db.commit()
 
 
 def execute_etl(lines):
     ids = {}
 
     for line in lines:
-        #print(line)
-        #sys.exit()
+        # print(line)
+        # sys.exit()
         fatura = build_fatura(line)
         ids['id_fat'] = save_faturas(fatura)
 
@@ -255,15 +261,15 @@ def execute_etl(lines):
 
 def execute_gold():
     lines = mongo_find_all(db="cate", col="h_m_r_silver")
-    #print(len(lines))
-    #sys.exit()
+    # print(len(lines))
+    # sys.exit()
     try:
         execute_etl(lines)
     except Exception as e:
         print(e.with_traceback())
     finally:
         cursor.close()
-        con.close()
+        api_db.close()
 
 
 execute_gold()
