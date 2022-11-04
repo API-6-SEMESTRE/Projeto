@@ -14,7 +14,7 @@ import time
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 from silver_analysis import analysis
-
+from gold_analysis import execute_gold
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
 
 pathing = {
@@ -332,7 +332,7 @@ def main():
     start_time_file = str(start_time).replace(':', '-')
     start_time_file = str(start_time_file).replace(' ', '_')
 
-    if args.level == 'bronze':
+    if args.level == 'bronze' or args.level == 'silver' or args.level == 'gold':
         df = ''
 
         log_id = uuid.uuid1()
@@ -347,8 +347,10 @@ def main():
         throw_away(df)
         run_loader(df)
 
-    elif args.level == 'silver':
+    if args.level == 'silver' or args.level == 'gold':
         analysis()
+    if args.level == 'gold':
+        execute_gold()
 
     end_time = datetime.now()
 
