@@ -41,7 +41,7 @@ collection = "rock"
 
 parser = argparse.ArgumentParser(description='ETL process for excel data')
 parser.add_argument('-l', '--level', type=str, metavar='', required=True,
-                    choices=['bronze', 'silver'], help='Level of ETL (bronze, silver)')
+                    choices=['bronze', 'silver', 'gold'], help='Level of ETL (bronze, silver, gold)')
 group = parser.add_mutually_exclusive_group()
 group.add_argument('-q', '--quiet', action='store_true', help='print quiet')
 group.add_argument('-v', '--verbose', action='store_true',
