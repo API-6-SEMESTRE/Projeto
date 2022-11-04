@@ -3,9 +3,9 @@ from pymongo import MongoClient
 import pandas
 from decouple import config
 
-user = config("MONGO_USER")
-password = config("MONGO_PASSW")
-con = config("MONGO_CON")
+user="cate"
+password="api6SEM."
+con="cate.rem7mj8.mongodb.net/?retryWrites=true&w=majority"
 
 db = "test"
 collection = "roll"
