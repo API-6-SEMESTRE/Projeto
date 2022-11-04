@@ -56,7 +56,6 @@ def build_fatura(line):
 
 
 def save_faturas(fatura):
-    print(fatura)
     sql = "insert into api.fatura(competencia, numero_fatura, rubrica , parcela, dt_geracao ) " \
           "values(%s,%s,%s,%s,%s) "
 
@@ -238,8 +237,6 @@ def execute_etl(lines):
     ids = {}
 
     for line in lines:
-        # print(line)
-        # sys.exit()
         fatura = build_fatura(line)
         ids['id_fat'] = save_faturas(fatura)
 
@@ -261,8 +258,7 @@ def execute_etl(lines):
 
 def execute_gold():
     lines = mongo_find_all(db="cate", col="h_m_r_silver")
-    # print(len(lines))
-    # sys.exit()
+
     try:
         execute_etl(lines)
     except Exception as e:
