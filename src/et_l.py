@@ -40,7 +40,7 @@ collection = "rock"
 
 parser = argparse.ArgumentParser(description='ETL process for excel data')
 parser.add_argument('-l', '--level', type=str, metavar='', required=True,
-                    choices=['bronze', 'silver', 'gold'], help='Level of ETL (bronze, silver, gold)')
+                    choices=['bronze', 'silver', 'gold', 'cate'], help='Level of ETL (bronze, silver, gold, cate)')
 group = parser.add_mutually_exclusive_group()
 group.add_argument('-q', '--quiet', action='store_true', help='print quiet')
 group.add_argument('-v', '--verbose', action='store_true',
@@ -634,7 +634,7 @@ def main():
     start_time_file = str(start_time).replace(':', '-')
     start_time_file = str(start_time_file).replace(' ', '_')
 
-    if args.level == 'bronze' or args.level == 'silver' or args.level == 'gold':
+    def execute_bronze():
         df = ''
 
         log_id = uuid.uuid1()
@@ -649,14 +649,33 @@ def main():
         throw_away(df)
         run_loader(df)
 
-    elif args.level == "silver" or args.level == "gold":
+    def execute_silver():
         df = ""
         df_ = ""
         log_id = uuid.uuid1()
         log_id = str(start_time_file) + "_" + str(log_id)
         setup_logger(log_id)
         analysis()
-    if args.level == 'gold':
+
+    if args.level == 'bronze':
+        execute_bronze()    
+
+    elif args.level == "silver":
+        execute_silver()    
+        
+    elif args.level == 'gold':
+        execute_gold()
+
+    elif args.level == 'cate':
+        #Set level for proccess
+        args.level = 'bronze'
+        #Execute proccess
+        execute_bronze() 
+        
+        args.level = 'silver'
+        execute_silver() 
+        
+        args.level = 'gold'
         execute_gold()
 
     end_time = datetime.now()
