@@ -12,6 +12,7 @@ import json
 import logging
 import time
 import warnings
+import os
 warnings.filterwarnings("ignore", category=FutureWarning)
 from gold_analysis import execute_gold
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
@@ -60,6 +61,16 @@ def log_everything(logger, df):
         else:
             logger.info(linha_log)
 
+def save_logging(log_id):
+    location = 'logs/'
+    
+    with open('logs/'+log_id+'.log', encoding='utf-8') as f:
+        lines = []
+        for line in f:
+            lines = f.readlines()  
+    print(lines[0])
+    
+    
 
 def setup_logger(log_id):
     file_name = './logs/'+str(log_id)+'.log'
@@ -646,6 +657,8 @@ def main():
         df = generate_json(df, log_id)
 
         sys.stdout.write('Inserting to database...\n')
+        save_logging(log_id)
+        sys.exit()
         throw_away(df)
         run_loader(df)
 
