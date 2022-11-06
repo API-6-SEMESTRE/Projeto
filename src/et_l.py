@@ -379,9 +379,32 @@ def analysis():
     repeticoes = df_header_mensalidade["marca_otica"].value_counts().loc[lambda x: x > 1]
     df = df_header_mensalidade["marca_otica"].isin(repeticoes.index)
     df_ = df_header_mensalidade[df]
-    df_["resultado"] = "mensalidade_marca_otica_repetida"
-    mongo_insert_many(df_.to_dict("records"), db=bd, col="h_m_r_silver", data_frame=df_)
-    df_
+    indexes = df_.index
+    competencias = []
+    marcas = []
+    idx_r = []
+    idx = []
+    helper = -1
+    for i in indexes:
+        if df_.loc[i]["marca_otica"] not in marcas:
+            marcas.append(df_.loc[i]["marca_otica"])
+            competencias.append(df_.loc[i]["dt_competencia"])
+            helper += 1
+            idx.append(i)
+        else:    # Dentre as repetições iniciais, procura pela mesma marca_otica mas com dt_competencia diferente
+            if df_.loc[i]["dt_competencia"].strip() != competencias[marcas.index(df_.loc[i]["marca_otica"])].strip():
+                df_.loc[i]["marca_otica"] = df_.loc[i]["marca_otica"] * 10000 + helper
+                marcas.append(df_.loc[i]["marca_otica"])
+                competencias.append(df_.loc[i]["dt_competencia"])
+                helper += 1
+                idx.append(i)
+            else:
+                idx_r.append(i)
+    # Mantém somente as repetições e coloca no banco
+    df_r = df_.drop(idx)
+    df_r["resultado"] = "mensalidade_marca_otica_repetida"
+    mongo_insert_many(df_.to_dict("records"), db=bd, col="h_m_r_silver")
+    df_r
 
     # In[12]:
 
@@ -390,6 +413,13 @@ def analysis():
     df_header_mensalidade_umarca.index.value_counts()
 
     # In[13]:
+
+    # Tenta inserir as linhas extraidas no tratamento das repetições baseado na dt_competencia
+    df_ = df_.drop(idx_r)
+    df_u = df_.groupby("marca_otica").nth[0]
+    df_u
+    df_header_mensalidade_umarca.append(df_u)
+    df_header_mensalidade_umarca
 
     # Mostra as colunas e qtd de linhas da base repasse
     repasse = mongo_find_all(db="cate", col="repasse_bronze")
@@ -467,32 +497,34 @@ def analysis():
 
     # In[22]:
 
-    print("Verifica os cod_contrato...")
-    # Verifica os cod_contrato que estão presentes na base header_mensalidade
-    counter = 0
-    contrato_unmatch = []
-    contrato_match = []
-    for contrato_repasse in df_repasse_m["cod_contrato"]:
-        search = df_header_mensalidade[df_header_mensalidade["contrato"] == contrato_repasse]
-        if len(search.isnull().values) >= 1:
-            counter += 1
-            if contrato_repasse not in contrato_match:
-                contrato_match.append(contrato_repasse)
-        else:
-            if contrato_repasse not in contrato_unmatch:
-                contrato_unmatch.append(contrato_repasse)
-    print(contrato_unmatch)
-    print(f"qtd de match: {counter}")
+    #print("Verificando os contratos...")
+    # # Verifica os cod_contrato que estão presentes na base header_mensalidade
+    # counter = 0
+    # contrato_unmatch = []
+    # contrato_match = []
+    # for contrato_repasse in df_repasse_m["cod_contrato"]:
+    #     search = df_header_mensalidade[df_header_mensalidade["contrato"] == contrato_repasse]
+    #     if len(search.isnull().values) >= 1:
+    #         counter += 1
+    #         if contrato_repasse not in contrato_match:
+    #             contrato_match.append(contrato_repasse)
+    #     else:
+    #         if contrato_repasse not in contrato_unmatch:
+    #             contrato_unmatch.append(contrato_repasse)
+    # print(contrato_unmatch)
+    # print(f"qtd de match: {counter}")
 
-    # In[23]:
 
-    # Separa em um df apenas os matches de contrato
-    match = df_repasse_m["cod_contrato"].isin(contrato_match)
-    df = df_repasse_m.copy()[~match]
-    df["resultado"] = "somente_repasse"
-    mongo_insert_many(df.to_dict("records"), db=bd, col="h_m_r_silver", data_frame=df)
-    df_repasse_f = df_repasse_m.copy()[match]
-    df_repasse_f["cod_contrato"]
+    # In[24]:
+
+
+    # # Separa em um df apenas os matches de contrato
+    # match = df_repasse_m["cod_contrato"].isin(contrato_match)
+    # df = df_repasse_m.copy()[~match]
+    # df["resultado"] = "somente_repasse"
+    # mongo_insert_many(df.to_dict("records"), db=bd, col="h_m_r_silver")
+    # df_repasse_f = df_repasse_m.copy()[match]
+    # df_repasse_f["cod_contrato"]
 
     # In[24]:
 
@@ -501,7 +533,14 @@ def analysis():
     df_h_m_r = pd.merge(df_header_mensalidade_umarca, df_repasse_umarca, on="marca_otica")
     df_h_m_r
 
-    # In[25]:
+    print("Verficando a competencia...")
+    # Verifica se a competencia é a mesma entre mensalidade e repasse
+    for i, row in df_h_m_r.iterrows():
+        if row["dt_competencia"].strip()[:7] == row["competencia"].strip()[:7]:
+            df_h_m_r.loc[i, "resultado_competencia"] = "mes_conciliado"
+        else:
+            df_h_m_r.loc[i, "resultado_competencia"] = "mes_divergente"
+    df_h_m_r
 
     print("Verifica dados do header x mensalidades que não estão no repasse...")
     # Verifica as linhas que estavam no header_mensalidade mas não estavam no repasse
@@ -526,22 +565,21 @@ def analysis():
 
     # In[27]:
 
-    print("Com as 3 bases.. confere se o contrato é o mesmo...")
-    # Analisa se o contrato da match, afinal eles são os campos chave entre header e repasse
-    # Salva num dict alguns dados relevantes sobre essa anomalia
-    contrato_unmatch = {"header_mensalidade": [], "repasse": [], "tp_beneficiario": [], "marca_otica": [],
-                        "rubrica": []}
-    for i in df_h_m_r.index:  # contrato vem do header_mensalidade e cod_contrato do repasse
-        if df_h_m_r["contrato"].at[i] != df_h_m_r["cod_contrato"].at[i]:
-            contrato_unmatch["header_mensalidade"].append(df_h_m_r["contrato"].at[i])
-            contrato_unmatch["repasse"].append(df_h_m_r["cod_contrato"].at[i])
-            contrato_unmatch["tp_beneficiario"].append(df_h_m_r["tp_beneficiario"].at[i])
-            contrato_unmatch["marca_otica"].append(i)
-            contrato_unmatch["rubrica"].append(df_h_m_r["rubrica"].at[i])
-            mongo_insert_one(df_h_m_r.loc[i].to_dict(), db=bd, col="dados_inconsistentes")
-            log_everything(logger, df_h_m_r.loc[i])
-            df_h_m_r.drop(i, inplace=True)
-    contrato_unmatch
+    #print("Com as 3 bases.. confere se o contrato é o mesmo...")
+    # # Analisa se o contrato da match, afinal eles são os campos chave entre header e repasse
+    # # Salva num dict alguns dados relevantes sobre essa anomalia
+    # contrato_unmatch = {"header_mensalidade": [], "repasse": [], "tp_beneficiario": [], "marca_otica": [], "rubrica": []}
+    # for i in df_h_m_r.index:    # contrato vem do header_mensalidade e cod_contrato do repasse
+    #     if df_h_m_r["contrato"].at[i] != df_h_m_r["cod_contrato"].at[i]:
+    #         contrato_unmatch["header_mensalidade"].append(df_h_m_r["contrato"].at[i])
+    #         contrato_unmatch["repasse"].append(df_h_m_r["cod_contrato"].at[i])
+    #         contrato_unmatch["tp_beneficiario"].append(df_h_m_r["tp_beneficiario"].at[i])
+    #         contrato_unmatch["marca_otica"].append(i)
+    #         contrato_unmatch["rubrica"].append(df_h_m_r["rubrica"].at[i])
+    #         df_h_m_r.loc[i]["resultado"] = "dados inconsistentes"
+    #         mongo_insert_one(df_h_m_r.loc[i].to_dict(), db=bd, col="h_m_r_silver")
+    #         df_h_m_r.drop(i, inplace=True)
+    # contrato_unmatch
 
     # In[28]:
 
@@ -600,9 +638,9 @@ def analysis():
         elif df_h_m_r["valor_orig"].at[i] < 0 and "Retroativa" in df_h_m_r["rubrica"].at[i]:
             print(i)
             matches.append(i)
-            results.append("conciliados")
+            results.append("conciliado")
         else:
-            results.append("conciliados_com_div")
+            results.append("conciliado_com_div")
     df_h_m_r["resultado"] = results
     mongo_insert_many(df_h_m_r.to_dict("records"), db=bd, col="h_m_r_silver", data_frame=df_h_m_r)
     print(matches)
