@@ -13,6 +13,7 @@ import logging
 import time
 import warnings
 import os
+import shutil
 warnings.filterwarnings("ignore", category=FutureWarning)
 from gold_analysis import execute_gold
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
@@ -67,9 +68,11 @@ def save_logging(log_id):
     with open('logs/'+log_id+'.log', encoding='utf-8') as f:
         lines = []
         for line in f:
-            lines = f.readlines()  
-    print(lines[0])
-    
+            lines = f.readlines()
+
+    df_log_mongo = pd.DataFrame(lines)
+    records = json.loads(df_log_mongo.T.to_json()).values()
+    mongo_insert_log(list=records, db="cate",col="logs")
     
 
 def setup_logger(log_id):
@@ -94,7 +97,7 @@ def setup_logger(log_id):
         logging.getLogger('').addHandler(console)
 
 
-def connect(user="", passw=""):
+def connect(user="cate", passw="api6SEM."):
     client = MongoClient(f"mongodb+srv://{user}:{passw}@cate.rem7mj8.mongodb.net/?retryWrites=true&w=majority",
                          server_api=ServerApi('1'))
     return client
@@ -251,6 +254,19 @@ def mongo_insert_many(list, user="", passw="", db=db, col=collection, data_frame
 
     log_everything(logger, data_frame)
 
+def mongo_insert_log(list, user="", passw="", db=db, col=collection, data_frame=None):
+
+    logger = logging.getLogger(args.level+'.inserting')
+
+    if (len(user) and len(passw)) <= 3:
+        client = connect()
+    else:
+        client = connect(user, passw)
+    db = client[db]
+    collection = db[col]
+    collection.insert_many(list)
+
+    
 
 def mongo_insert_error(list, user="", passw="", db=db, col=collection):
 
@@ -379,32 +395,9 @@ def analysis():
     repeticoes = df_header_mensalidade["marca_otica"].value_counts().loc[lambda x: x > 1]
     df = df_header_mensalidade["marca_otica"].isin(repeticoes.index)
     df_ = df_header_mensalidade[df]
-    indexes = df_.index
-    competencias = []
-    marcas = []
-    idx_r = []
-    idx = []
-    helper = -1
-    for i in indexes:
-        if df_.loc[i]["marca_otica"] not in marcas:
-            marcas.append(df_.loc[i]["marca_otica"])
-            competencias.append(df_.loc[i]["dt_competencia"])
-            helper += 1
-            idx.append(i)
-        else:    # Dentre as repetições iniciais, procura pela mesma marca_otica mas com dt_competencia diferente
-            if df_.loc[i]["dt_competencia"].strip() != competencias[marcas.index(df_.loc[i]["marca_otica"])].strip():
-                df_.loc[i]["marca_otica"] = df_.loc[i]["marca_otica"] * 10000 + helper
-                marcas.append(df_.loc[i]["marca_otica"])
-                competencias.append(df_.loc[i]["dt_competencia"])
-                helper += 1
-                idx.append(i)
-            else:
-                idx_r.append(i)
-    # Mantém somente as repetições e coloca no banco
-    df_r = df_.drop(idx)
-    df_r["resultado"] = "mensalidade_marca_otica_repetida"
-    mongo_insert_many(df_.to_dict("records"), db=bd, col="h_m_r_silver")
-    df_r
+    df_["resultado"] = "mensalidade_marca_otica_repetida"
+    mongo_insert_many(df_.to_dict("records"), db=bd, col="h_m_r_silver", data_frame=df_)
+    df_
 
     # In[12]:
 
@@ -413,13 +406,6 @@ def analysis():
     df_header_mensalidade_umarca.index.value_counts()
 
     # In[13]:
-
-    # Tenta inserir as linhas extraidas no tratamento das repetições baseado na dt_competencia
-    df_ = df_.drop(idx_r)
-    df_u = df_.groupby("marca_otica").nth[0]
-    df_u
-    df_header_mensalidade_umarca.append(df_u)
-    df_header_mensalidade_umarca
 
     # Mostra as colunas e qtd de linhas da base repasse
     repasse = mongo_find_all(db="cate", col="repasse_bronze")
@@ -497,34 +483,32 @@ def analysis():
 
     # In[22]:
 
-    #print("Verificando os contratos...")
-    # # Verifica os cod_contrato que estão presentes na base header_mensalidade
-    # counter = 0
-    # contrato_unmatch = []
-    # contrato_match = []
-    # for contrato_repasse in df_repasse_m["cod_contrato"]:
-    #     search = df_header_mensalidade[df_header_mensalidade["contrato"] == contrato_repasse]
-    #     if len(search.isnull().values) >= 1:
-    #         counter += 1
-    #         if contrato_repasse not in contrato_match:
-    #             contrato_match.append(contrato_repasse)
-    #     else:
-    #         if contrato_repasse not in contrato_unmatch:
-    #             contrato_unmatch.append(contrato_repasse)
-    # print(contrato_unmatch)
-    # print(f"qtd de match: {counter}")
+    print("Verifica os cod_contrato...")
+    # Verifica os cod_contrato que estão presentes na base header_mensalidade
+    counter = 0
+    contrato_unmatch = []
+    contrato_match = []
+    for contrato_repasse in df_repasse_m["cod_contrato"]:
+        search = df_header_mensalidade[df_header_mensalidade["contrato"] == contrato_repasse]
+        if len(search.isnull().values) >= 1:
+            counter += 1
+            if contrato_repasse not in contrato_match:
+                contrato_match.append(contrato_repasse)
+        else:
+            if contrato_repasse not in contrato_unmatch:
+                contrato_unmatch.append(contrato_repasse)
+    print(contrato_unmatch)
+    print(f"qtd de match: {counter}")
 
+    # In[23]:
 
-    # In[24]:
-
-
-    # # Separa em um df apenas os matches de contrato
-    # match = df_repasse_m["cod_contrato"].isin(contrato_match)
-    # df = df_repasse_m.copy()[~match]
-    # df["resultado"] = "somente_repasse"
-    # mongo_insert_many(df.to_dict("records"), db=bd, col="h_m_r_silver")
-    # df_repasse_f = df_repasse_m.copy()[match]
-    # df_repasse_f["cod_contrato"]
+    # Separa em um df apenas os matches de contrato
+    match = df_repasse_m["cod_contrato"].isin(contrato_match)
+    df = df_repasse_m.copy()[~match]
+    df["resultado"] = "somente_repasse"
+    mongo_insert_many(df.to_dict("records"), db=bd, col="h_m_r_silver", data_frame=df)
+    df_repasse_f = df_repasse_m.copy()[match]
+    df_repasse_f["cod_contrato"]
 
     # In[24]:
 
@@ -533,14 +517,7 @@ def analysis():
     df_h_m_r = pd.merge(df_header_mensalidade_umarca, df_repasse_umarca, on="marca_otica")
     df_h_m_r
 
-    print("Verficando a competencia...")
-    # Verifica se a competencia é a mesma entre mensalidade e repasse
-    for i, row in df_h_m_r.iterrows():
-        if row["dt_competencia"].strip()[:7] == row["competencia"].strip()[:7]:
-            df_h_m_r.loc[i, "resultado_competencia"] = "mes_conciliado"
-        else:
-            df_h_m_r.loc[i, "resultado_competencia"] = "mes_divergente"
-    df_h_m_r
+    # In[25]:
 
     print("Verifica dados do header x mensalidades que não estão no repasse...")
     # Verifica as linhas que estavam no header_mensalidade mas não estavam no repasse
@@ -565,21 +542,22 @@ def analysis():
 
     # In[27]:
 
-    #print("Com as 3 bases.. confere se o contrato é o mesmo...")
-    # # Analisa se o contrato da match, afinal eles são os campos chave entre header e repasse
-    # # Salva num dict alguns dados relevantes sobre essa anomalia
-    # contrato_unmatch = {"header_mensalidade": [], "repasse": [], "tp_beneficiario": [], "marca_otica": [], "rubrica": []}
-    # for i in df_h_m_r.index:    # contrato vem do header_mensalidade e cod_contrato do repasse
-    #     if df_h_m_r["contrato"].at[i] != df_h_m_r["cod_contrato"].at[i]:
-    #         contrato_unmatch["header_mensalidade"].append(df_h_m_r["contrato"].at[i])
-    #         contrato_unmatch["repasse"].append(df_h_m_r["cod_contrato"].at[i])
-    #         contrato_unmatch["tp_beneficiario"].append(df_h_m_r["tp_beneficiario"].at[i])
-    #         contrato_unmatch["marca_otica"].append(i)
-    #         contrato_unmatch["rubrica"].append(df_h_m_r["rubrica"].at[i])
-    #         df_h_m_r.loc[i]["resultado"] = "dados inconsistentes"
-    #         mongo_insert_one(df_h_m_r.loc[i].to_dict(), db=bd, col="h_m_r_silver")
-    #         df_h_m_r.drop(i, inplace=True)
-    # contrato_unmatch
+    print("Com as 3 bases.. confere se o contrato é o mesmo...")
+    # Analisa se o contrato da match, afinal eles são os campos chave entre header e repasse
+    # Salva num dict alguns dados relevantes sobre essa anomalia
+    contrato_unmatch = {"header_mensalidade": [], "repasse": [], "tp_beneficiario": [], "marca_otica": [],
+                        "rubrica": []}
+    for i in df_h_m_r.index:  # contrato vem do header_mensalidade e cod_contrato do repasse
+        if df_h_m_r["contrato"].at[i] != df_h_m_r["cod_contrato"].at[i]:
+            contrato_unmatch["header_mensalidade"].append(df_h_m_r["contrato"].at[i])
+            contrato_unmatch["repasse"].append(df_h_m_r["cod_contrato"].at[i])
+            contrato_unmatch["tp_beneficiario"].append(df_h_m_r["tp_beneficiario"].at[i])
+            contrato_unmatch["marca_otica"].append(i)
+            contrato_unmatch["rubrica"].append(df_h_m_r["rubrica"].at[i])
+            mongo_insert_one(df_h_m_r.loc[i].to_dict(), db=bd, col="dados_inconsistentes")
+            log_everything(logger, df_h_m_r.loc[i])
+            df_h_m_r.drop(i, inplace=True)
+    contrato_unmatch
 
     # In[28]:
 
@@ -636,11 +614,10 @@ def analysis():
             matches.append(i)
             results.append("conciliado")
         elif df_h_m_r["valor_orig"].at[i] < 0 and "Retroativa" in df_h_m_r["rubrica"].at[i]:
-            print(i)
             matches.append(i)
-            results.append("conciliado")
+            results.append("conciliados")
         else:
-            results.append("conciliado_com_div")
+            results.append("conciliados_com_div")
     df_h_m_r["resultado"] = results
     mongo_insert_many(df_h_m_r.to_dict("records"), db=bd, col="h_m_r_silver", data_frame=df_h_m_r)
     print(matches)
@@ -689,16 +666,15 @@ def main():
         log_id = uuid.uuid1()
         log_id = str(start_time_file) + '_' + str(log_id)
         setup_logger(log_id)
-
         sys.stdout.write('Executing {} procedure...\n'.format(args.level))
         sys.stdout.write('Generating json\n')
         df = generate_json(df, log_id)
 
         sys.stdout.write('Inserting to database...\n')
-        save_logging(log_id)
-        sys.exit()
+        
         throw_away(df)
         run_loader(df)
+        save_logging(log_id)
 
     def execute_silver():
         df = ""
@@ -707,6 +683,7 @@ def main():
         log_id = str(start_time_file) + "_" + str(log_id)
         setup_logger(log_id)
         analysis()
+        save_logging(log_id)
 
     if args.level == 'bronze':
         execute_bronze()    

@@ -10,7 +10,7 @@ api_db = mysql.connector.connect(
     host='localhost',
     user='root',
     password='',
-    database='api'
+    database='dw'
 )
 
 header = mongo_find_all(db="cate", col="header_bronze")
@@ -56,7 +56,7 @@ def build_fatura(line):
 
 
 def save_faturas(fatura):
-    sql = "insert into api.fatura(competencia, numero_fatura, rubrica , parcela, dt_geracao ) " \
+    sql = "insert into dw.fatura(competencia, numero_fatura, rubrica , parcela, dt_geracao ) " \
           "values(%s,%s,%s,%s,%s) "
 
     cursor.execute(sql,
@@ -86,7 +86,7 @@ def build_convenio(line):
 
 
 def save_convenio(convenio):
-    sql = "insert into api.convenio(codigo_convenio, convenio, operadora) " \
+    sql = "insert into dw.convenio(codigo_convenio, convenio, operadora) " \
           "values(%s,%s,%s) "
 
     cursor.execute(sql,
@@ -115,7 +115,7 @@ def build_beneficiario(line):
 
 
 def save_beneficiario(beneficiario):
-    sql = "insert into api.beneficiario(tipo, nome, marca_otica, dt_nascimento) " \
+    sql = "insert into dw.benificiario(tipo, nome, marca_otica, dt_nascimento) " \
           "values(%s,%s,%s,%s) "
 
     cursor.execute(sql,
@@ -138,7 +138,7 @@ def build_data():
 
 
 def save_data(data):
-    sql = "insert into api.tempo(data) " \
+    sql = "insert into dw.tempo(data) " \
           "values(%s) "
 
     cursor.execute(sql,
@@ -173,7 +173,7 @@ def build_contrato(line):
 
 
 def save_contrato(contrato):
-    sql = "insert into api.contrato(plano, num_contrato, situacao, " \
+    sql = "insert into dw.contrato(plano, num_contrato, situacao, " \
           "dependente, dt_cancelamento, dt_situacao, inicio_vigencia, dt_suspensao ) " \
           "values(%s,%s,%s,%s,%s,%s,%s,%s) "
 
@@ -215,7 +215,7 @@ def build_fato(line, ids):
 
 
 def save_fato(fato):
-    sql = "insert into api.fato(id_cont, id_fat, id_seg , " \
+    sql = "insert into dw.fato(id_cont, id_fat, id_seg , " \
           "id_dat, id_conv, mensalidade, repasse, caso ) " \
           "values(%s,%s,%s,%s,%s,%s,%s,%s)"
 
