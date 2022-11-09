@@ -7,9 +7,9 @@ import mysql.connector
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 api_db = mysql.connector.connect(
-    host=<seuhost>,
-    user=<seuuser>,
-    password=<seupassword>,
+    host=<host>,
+    user=<user>,
+    password=<password>,
     database='dw'
 )
 
@@ -20,7 +20,9 @@ cursor = api_db.cursor()
 def to_date(x):
     if x == 'NaT' or x is None or x == 'nan':
         return None
-    return datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%f%z')
+
+    x = x[:10]
+    return datetime.strptime(x, '%Y-%m-%d')
 
 
 def get_id():
