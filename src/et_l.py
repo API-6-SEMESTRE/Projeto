@@ -19,9 +19,9 @@ from gold_analysis import execute_gold
 # dictionary that gets the files paths, standard path is 'data_sources/xlsx'
 
 pathing = {
-    'header': 'data_sources/Julho_Agosto/amil_header_bronze.xlsx',
-    'mensalidade': 'data_sources/Julho_Agosto/amil_mensalidade_bronze.xlsx',
-    'repasse': 'data_sources/Julho_Agosto/amil_repasse_bronze.xlsx'
+    'header': 'data_sources/full/amil_header_bronze.xlsx',
+    'mensalidade': 'data_sources/full/amil_mensalidade_bronze.xlsx',
+    'repasse': 'data_sources/full/amil_repasse_bronze.xlsx'
 }
 
 # dictionary that gets the columns from each file by namekey, 'namefile': ['columns']

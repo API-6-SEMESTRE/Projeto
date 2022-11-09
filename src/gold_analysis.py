@@ -7,9 +7,9 @@ import mysql.connector
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 api_db = mysql.connector.connect(
-    host=<host>,
-    user=<user>,
-    password=<password>,
+    host='localhost',
+    user='root',
+    password='',
     database='dw'
 )
 
