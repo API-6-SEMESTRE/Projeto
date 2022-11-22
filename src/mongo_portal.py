@@ -1,6 +1,5 @@
 from pymongo.server_api import ServerApi
 from pymongo import MongoClient
-import pandas
 from decouple import config
 
 user = config("MONGO_USER")

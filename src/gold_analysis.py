@@ -68,7 +68,6 @@ def save_faturas(fatura):
                     fatura['parcela'],
                     fatura['dt_geracao']])
 
-    print(get_id())
     api_db.commit()
     return get_id()
 
@@ -96,7 +95,6 @@ def save_convenio(convenio):
                     convenio['convenio'],
                     convenio['operadora']])
 
-    print(get_id())
     api_db.commit()
     return get_id()
 
@@ -126,7 +124,6 @@ def save_beneficiario(beneficiario):
                     beneficiario['marca_otica'],
                     beneficiario['dt_nascimento']])
 
-    print(get_id())
     api_db.commit()
     return get_id()
 
@@ -146,7 +143,6 @@ def save_data(data):
     cursor.execute(sql,
                    [data['data']])
 
-    print(get_id())
     api_db.commit()
     return get_id()
 
@@ -189,7 +185,6 @@ def save_contrato(contrato):
                     contrato['inicio_vigencia'],
                     contrato['dt_suspensao']])
 
-    print(get_id())
     api_db.commit()
     return get_id()
 

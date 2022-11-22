@@ -2,8 +2,10 @@ import os
 import shutil
 
 
-path=os.getcwd()+'/logs'
-path = path.replace('\\','/')
 
-shutil.rmtree(path)
-os.mkdir(path)
+def delete_log():
+    path=os.getcwd()+'/logs'
+    path = path.replace('\\','/')
+
+    shutil.rmtree(path)
+    os.mkdir(path)
