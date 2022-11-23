@@ -13,7 +13,7 @@ import logging
 import time
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
-from gold_analysis import execute_gold
+#from gold_analysis import execute_gold
 
 pathing = {
     'header': 'data_sources/full/amil_header_bronze.xlsx',
@@ -694,49 +694,7 @@ def main():
     start_time_file = str(start_time_file).replace(' ', '_')
 
 
-    def execute_bronze():
-        df = ''
 
-        log_id = uuid.uuid1()
-        log_id = str(start_time_file) + '_' + str(log_id)
-        setup_logger(log_id)
-        sys.stdout.write('Executing {} procedure...\n'.format(args.level))
-        sys.stdout.write('Generating json\n')
-        df = generate_json(df, log_id)
-
-        sys.stdout.write('Inserting to database...\n')
-        
-        throw_away(df)
-        run_loader(df)
-        save_logging(log_id)
-
-    def execute_silver():
-        df = ""
-        df_ = ""
-        log_id = uuid.uuid1()
-        log_id = str(start_time_file) + "_" + str(log_id)
-        setup_logger(log_id)
-        analysis()
-        save_logging(log_id)
-
-    if args.level == 'bronze':
-        execute_bronze()    
-
-    elif args.level == "silver":
-        execute_silver()    
-        
-    elif args.level == 'gold':
-        execute_gold()
-
-    elif args.level == 'all':
-        args.level = 'bronze'
-        execute_bronze() 
-        
-        args.level = 'silver'
-        execute_silver() 
-        
-        args.level = 'gold'
-        execute_gold()
 
     end_time = datetime.now()
 

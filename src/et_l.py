@@ -1,4 +1,6 @@
 import argparse
+import sys
+
 from pipeline import execute_etl
 from delete_log import delete_log
 
@@ -13,5 +15,9 @@ args = parser.parse_args()
 
 
 if __name__ == '__main__':
-    execute_etl(args.level, args.verbose)
-    delete_log()
+    try:
+        execute_etl(args.level, args.verbose)
+    except Exception as e:
+        sys.out.println(e.with_traceback())
+    finally:
+        delete_log()
