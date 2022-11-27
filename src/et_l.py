@@ -451,9 +451,10 @@ def analysis():
 
     # Transforma algumas colunas em número
     #df_repasse["codigo_convenio"] = pd.to_numeric(df_repasse["codigo_convenio"])
-    df_repasse["codigo_plano"] = pd.to_numeric(df_repasse["codigo_plano"])
+    # df_repasse["codigo_plano"] = pd.to_numeric(df_repasse["codigo_plano"])
     df_repasse["marca_otica"] = pd.to_numeric(df_repasse["marca_otica"])
     df_repasse["saude_net_orig"] = pd.to_numeric(df_repasse["saude_net_orig"])
+    df_repasse["dependente"] = pd.to_numeric(df_repasse["dependente"])
     df_repasse.dtypes
 
     # In[16]:
