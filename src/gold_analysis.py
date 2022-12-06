@@ -1,8 +1,8 @@
+import sys
 from mongo_portal import mongo_find_all
 from datetime import datetime
 import warnings
 import mysql.connector
-import traceback
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -13,7 +13,6 @@ api_db = mysql.connector.connect(
     database='dw'
 )
 
-header = mongo_find_all(db="cate", col="header_bronze")
 cursor = api_db.cursor()
 
 
@@ -258,8 +257,8 @@ def execute_gold():
 
     try:
         execute_etl(lines)
-    except:
-        traceback.print_exc()
+    except Exception as e:
+        print(e.with_traceback())
     finally:
         cursor.close()
         api_db.close()
