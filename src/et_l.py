@@ -1021,6 +1021,6 @@ if __name__ == '__main__':
     except:
         traceback.print_exc()
     finally:
-        delete_log.delete_log()
+        # delete_log.delete_log()
         cursor.close()
         api_db.close()
