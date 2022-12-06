@@ -692,31 +692,29 @@ def main():
     start_time = datetime.now()
     start_time_file = str(start_time).replace(':', '-')
     start_time_file = str(start_time_file).replace(' ', '_')
+    log_id = uuid.uuid1()
+    log_id = str(start_time_file) + '_' + str(log_id)
 
     def execute_bronze():
+        sys.stdout.write('Starting Bronze procedure...\n')
         df = ''
-
-        log_id = uuid.uuid1()
-        log_id = str(start_time_file) + '_' + str(log_id)
         setup_logger(log_id)
         sys.stdout.write('Executing Bronze procedure...\n')
         sys.stdout.write('Generating json\n')
         df = generate_json(df, log_id)
 
-        sys.stdout.write('Inserting to mongo...\n')
+        sys.stdout.write('Inserting into mongo...\n')
 
         throw_away(df)
         run_loader(df)
         save_logging(log_id)
 
     def execute_silver():
-        log_id = uuid.uuid1()
-        log_id = str(start_time_file) + "_" + str(log_id)
+        sys.stdout.write('Starting Silver procedure...\n')
         setup_logger(log_id)
         sys.stdout.write('Executing Silver procedure...\n')
         analysis()
-        sys.stdout.write('Inserting to mongo...\n')
-        save_logging(log_id)
+        sys.stdout.write('Inserting into mongodb...\n')
 
     if args.level == 'bronze':
         execute_bronze()
@@ -725,8 +723,10 @@ def main():
         execute_silver()
 
     elif args.level == 'gold':
+        sys.stdout.write('Starting Gold procedure...\n')
         sys.stdout.write('Executing Gold procedure...\n')
         execute_gold()
+        sys.stdout.write('Data inserted into Data Warehouse!\n')
 
     elif args.level == 'all':
         args.level = 'bronze'
@@ -737,6 +737,9 @@ def main():
 
         args.level = 'gold'
         execute_gold()
+
+    sys.stdout.write('Inserting log into mongodb...\n')
+    save_logging(log_id)
 
     end_time = datetime.now()
 
